@@ -12,7 +12,7 @@ export const HARDNESS_LEVELS: HardnessLevel[] = [
 export const DEFAULT_FILTERS: PuzzleFilters = {
   difficulties: ["Beginner", "Intermediate", "Advanced"],
   themes: [],
-  ratingMax: 2200
+  ratingMax: 3000
 };
 
 export function getAvailableThemes(puzzles: Puzzle[]) {

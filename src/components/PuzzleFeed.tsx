@@ -32,18 +32,9 @@ export default function PuzzleFeed({
   }
 
   useEffect(() => {
-    setActiveIndex(0);
     cardRefs.current = cardRefs.current.slice(0, puzzles.length);
-
-    if (puzzles.length === 0) {
-      return;
-    }
-
-    cardRefs.current[0]?.scrollIntoView({
-      behavior: "auto",
-      block: "start"
-    });
-  }, [puzzles]);
+    setActiveIndex((current) => Math.min(current, Math.max(0, puzzles.length - 1)));
+  }, [puzzles.length]);
 
   useEffect(() => {
     const root = feedRef.current;

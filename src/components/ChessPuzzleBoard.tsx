@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { DragEvent } from "react";
 import { Chess, type Square } from "chess.js";
+import ChessPieceIcon from "./ChessPieceIcon";
 import type { PlayerColor } from "../types";
 
 interface ChessPuzzleBoardProps {
@@ -14,21 +15,6 @@ interface ChessPuzzleBoardProps {
 
 const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
-
-const pieceSymbols: Record<string, string> = {
-  wp: "♙",
-  wn: "♘",
-  wb: "♗",
-  wr: "♖",
-  wq: "♕",
-  wk: "♔",
-  bp: "♟",
-  bn: "♞",
-  bb: "♝",
-  br: "♜",
-  bq: "♛",
-  bk: "♚"
-};
 
 export default function ChessPuzzleBoard({
   fen,
@@ -97,7 +83,6 @@ export default function ChessPuzzleBoard({
         displayFiles.map((file) => {
           const square = `${file}${rank}`;
           const piece = game.get(square as Square);
-          const pieceKey = piece ? `${piece.color}${piece.type}` : "";
           const isLight = (files.indexOf(file) + rank) % 2 === 1;
           const isSelected = selectedSquare === square;
 
@@ -121,7 +106,7 @@ export default function ChessPuzzleBoard({
                   draggable={!disabled && piece.color === game.turn()}
                   onDragStart={(event) => handleDragStart(event, square, piece.color)}
                 >
-                  {pieceSymbols[pieceKey]}
+                  <ChessPieceIcon color={piece.color} type={piece.type} />
                 </span>
               ) : null}
               <span className="coordinate coordinate--file">{file}</span>

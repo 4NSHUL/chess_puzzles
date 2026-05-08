@@ -2,6 +2,11 @@ import { Chess } from "chess.js";
 import { describe, expect, it } from "vitest";
 import puzzles from "../data/puzzles.json";
 import {
+  applyHardnessLevel,
+  DEFAULT_FILTERS,
+  filterPuzzles
+} from "../lib/filters";
+import {
   applyUciMove,
   attemptPuzzleMove,
   createPuzzleRun,
@@ -98,8 +103,12 @@ describe("puzzle engine", () => {
     expect(solution?.state.status).toBe("solution");
   });
 
-  it("ships with at least 50 locally structured puzzles", () => {
-    expect((puzzles as Puzzle[]).length).toBeGreaterThanOrEqual(50);
+  it("ships with at least 1500 locally structured puzzles", () => {
+    expect((puzzles as Puzzle[]).length).toBeGreaterThanOrEqual(1500);
+  });
+
+  it("does not ship very basic low-rated puzzles", () => {
+    expect(Math.min(...(puzzles as Puzzle[]).map((puzzle) => puzzle.rating))).toBeGreaterThan(800);
   });
 
   it("keeps every stored solution line playable by chess.js", () => {
@@ -116,5 +125,13 @@ describe("puzzle engine", () => {
     expect(formatElapsedTime(0)).toBe("0:00");
     expect(formatElapsedTime(9)).toBe("0:09");
     expect(formatElapsedTime(125)).toBe("2:05");
+  });
+
+  it("filters puzzles by one hardness level at a time", () => {
+    const filters = applyHardnessLevel(DEFAULT_FILTERS, "Advanced");
+    const filtered = filterPuzzles(puzzles as Puzzle[], filters);
+
+    expect(filtered.length).toBeGreaterThan(0);
+    expect(filtered.every((puzzle) => puzzle.difficulty === "Advanced")).toBe(true);
   });
 });

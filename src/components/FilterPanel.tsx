@@ -83,7 +83,7 @@ export default function FilterPanel({
             <input
               type="range"
               min="500"
-              max="2200"
+              max="3000"
               step="50"
               value={filters.ratingMax}
               onChange={(event) =>

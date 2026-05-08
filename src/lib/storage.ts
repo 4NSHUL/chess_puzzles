@@ -1,6 +1,9 @@
 import type { PuzzleOutcome, PuzzleStatsSnapshot } from "../types";
 
-const STORAGE_KEY = "chess-puzzle-reels.stats.v1";
+const CURRENT_USER_KEY = "chess-puzzles.current-user.v1";
+const DB_NAME = "chess-puzzles";
+const DB_VERSION = 1;
+const USER_STORE = "users";
 
 export const EMPTY_STATS: PuzzleStatsSnapshot = {
   solvedIds: [],
@@ -10,17 +13,76 @@ export const EMPTY_STATS: PuzzleStatsSnapshot = {
   bestStreak: 0
 };
 
-export function loadStats(): PuzzleStatsSnapshot {
+interface UserRecord {
+  userName: string;
+  stats: PuzzleStatsSnapshot;
+  updatedAt: string;
+}
+
+export function normalizeUserName(userName: string) {
+  return userName.trim().toLowerCase();
+}
+
+export function loadCurrentUser() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.localStorage.getItem(CURRENT_USER_KEY);
+}
+
+export function saveCurrentUser(userName: string) {
+  window.localStorage.setItem(CURRENT_USER_KEY, normalizeUserName(userName));
+}
+
+export function clearCurrentUser() {
+  window.localStorage.removeItem(CURRENT_USER_KEY);
+}
+
+export async function loadUserStats(userName: string): Promise<PuzzleStatsSnapshot> {
+  const normalized = normalizeUserName(userName);
+  const db = await openDatabase();
+
+  if (!db) {
+    return loadFallbackStats(normalized);
+  }
+
+  const record = await readRecord(db, normalized);
+  return record?.stats ?? loadFallbackStats(normalized);
+}
+
+export async function saveUserStats(
+  userName: string,
+  stats: PuzzleStatsSnapshot
+) {
+  const normalized = normalizeUserName(userName);
+  const db = await openDatabase();
+
+  if (!db) {
+    saveFallbackStats(normalized, stats);
+    return;
+  }
+
+  await writeRecord(db, {
+    userName: normalized,
+    stats,
+    updatedAt: new Date().toISOString()
+  });
+}
+
+function loadFallbackStats(userName: string): PuzzleStatsSnapshot {
   if (typeof window === "undefined") {
     return EMPTY_STATS;
   }
 
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return EMPTY_STATS;
-    }
+  const key = getFallbackKey(userName);
+  const raw = window.localStorage.getItem(key);
 
+  if (!raw) {
+    return EMPTY_STATS;
+  }
+
+  try {
     return {
       ...EMPTY_STATS,
       ...JSON.parse(raw)
@@ -30,8 +92,56 @@ export function loadStats(): PuzzleStatsSnapshot {
   }
 }
 
-export function saveStats(stats: PuzzleStatsSnapshot) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stats));
+function saveFallbackStats(userName: string, stats: PuzzleStatsSnapshot) {
+  window.localStorage.setItem(getFallbackKey(userName), JSON.stringify(stats));
+}
+
+function getFallbackKey(userName: string) {
+  return `chess-puzzles.${userName}.stats.v1`;
+}
+
+function openDatabase() {
+  if (typeof window === "undefined" || !("indexedDB" in window)) {
+    return Promise.resolve(null);
+  }
+
+  return new Promise<IDBDatabase | null>((resolve) => {
+    const request = window.indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(USER_STORE)) {
+        db.createObjectStore(USER_STORE, {
+          keyPath: "userName"
+        });
+      }
+    };
+
+    request.onerror = () => resolve(null);
+    request.onsuccess = () => resolve(request.result);
+  });
+}
+
+function readRecord(db: IDBDatabase, userName: string) {
+  return new Promise<UserRecord | undefined>((resolve) => {
+    const transaction = db.transaction(USER_STORE, "readonly");
+    const store = transaction.objectStore(USER_STORE);
+    const request = store.get(userName);
+
+    request.onerror = () => resolve(undefined);
+    request.onsuccess = () => resolve(request.result as UserRecord | undefined);
+  });
+}
+
+function writeRecord(db: IDBDatabase, record: UserRecord) {
+  return new Promise<void>((resolve, reject) => {
+    const transaction = db.transaction(USER_STORE, "readwrite");
+    const store = transaction.objectStore(USER_STORE);
+    store.put(record);
+
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () => reject(transaction.error);
+  });
 }
 
 export function updateStats(

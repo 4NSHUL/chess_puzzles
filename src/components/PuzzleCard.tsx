@@ -1,8 +1,9 @@
-import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import ChessPuzzleBoard from "./ChessPuzzleBoard";
 import PuzzleControls from "./PuzzleControls";
 import type { PuzzleSoundCue } from "../hooks/usePuzzleAudio";
+import { getProgressiveHint, MAX_HINT_LEVEL } from "../lib/hints";
 import { attemptPuzzleMove, createPuzzleRun, revealSolution } from "../lib/puzzleEngine";
 import { formatElapsedTime } from "../lib/time";
 import type { Puzzle, PuzzleOutcome, PuzzleRunState } from "../types";
@@ -41,6 +42,8 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
   const [solutionLine, setSolutionLine] = useState<string[]>([]);
   const [feedback, setFeedback] = useState("Find the best move.");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [hintLevel, setHintLevel] = useState(0);
+  const [hintText, setHintText] = useState("");
   const reportedOutcomes = useRef(new Set<PuzzleOutcome>());
 
   const game = useMemo(() => new Chess(run.fen), [run.fen]);
@@ -57,6 +60,8 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     setSolutionLine([]);
     setFeedback("Find the best move.");
     setElapsedSeconds(0);
+    setHintLevel(0);
+    setHintText("");
     reportedOutcomes.current = new Set();
   }, [puzzle]);
 
@@ -72,22 +77,26 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     return () => window.clearInterval(timer);
   }, [isActive, run.completed]);
 
-  useEffect(() => {
-    if (run.status !== "solved") {
-      return undefined;
-    }
-
-    const timer = window.setTimeout(onAdvance, 850);
-    return () => window.clearTimeout(timer);
-  }, [onAdvance, run.status]);
-
-  function reportOnce(outcome: PuzzleOutcome) {
+  const reportOnce = useCallback((outcome: PuzzleOutcome) => {
     if (reportedOutcomes.current.has(outcome)) {
       return;
     }
     reportedOutcomes.current.add(outcome);
     onOutcome(puzzle.id, outcome);
-  }
+  }, [onOutcome, puzzle.id]);
+
+  useEffect(() => {
+    if (run.status !== "solved") {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      reportOnce("solved");
+      onAdvance();
+    }, 850);
+
+    return () => window.clearTimeout(timer);
+  }, [onAdvance, reportOnce, run.status]);
 
   function handleMove(from: string, to: string) {
     const result = attemptPuzzleMove(puzzle, run, {
@@ -111,7 +120,6 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     }
 
     if (result.state.completed) {
-      reportOnce("solved");
       onSoundEvent("solved");
       setFeedback(
         `Solved with ${result.attempted?.san ?? "the best move"} in ${formatElapsedTime(
@@ -122,6 +130,8 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     }
 
     onSoundEvent("correct");
+    setHintLevel(0);
+    setHintText("");
     const reply = result.autoMoves[result.autoMoves.length - 1];
     setFeedback(
       reply
@@ -136,12 +146,19 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     setHintVisible(false);
     setSolutionLine([]);
     setElapsedSeconds(0);
+    setHintLevel(0);
+    setHintText("");
     setFeedback("Position reset.");
   }
 
   function handleHint() {
+    const nextHintLevel = Math.min(hintLevel + 1, MAX_HINT_LEVEL);
+    const nextHintText = getProgressiveHint(puzzle, run, nextHintLevel);
+
+    setHintLevel(nextHintLevel);
+    setHintText(nextHintText);
     setHintVisible(true);
-    setFeedback(puzzle.hint ?? "No hint is available for this puzzle.");
+    setFeedback(nextHintText);
   }
 
   function handleSkip() {
@@ -212,7 +229,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
 
         {hintVisible ? (
           <p className="context-note">
-            <strong>Hint:</strong> {puzzle.hint}
+            <strong>Hint {hintLevel}/{MAX_HINT_LEVEL}:</strong> {hintText}
           </p>
         ) : null}
 

@@ -12,6 +12,10 @@ export interface Puzzle {
   themes: string[];
   hint?: string;
   explanation?: string;
+  source?: {
+    name: string;
+    url?: string;
+  };
 }
 
 export type PuzzleStatus =

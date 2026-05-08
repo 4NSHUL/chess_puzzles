@@ -1,18 +1,27 @@
+import { LogOut } from "lucide-react";
 import type { PuzzleStatsSnapshot } from "../types";
 
 interface PuzzleStatsProps {
   stats: PuzzleStatsSnapshot;
+  userName: string;
   totalPuzzles: number;
   visiblePuzzles: number;
+  onLogout: () => void;
 }
 
 export default function PuzzleStats({
   stats,
+  userName,
   totalPuzzles,
-  visiblePuzzles
+  visiblePuzzles,
+  onLogout
 }: PuzzleStatsProps) {
   return (
     <aside className="stats-bar" aria-label="Puzzle statistics">
+      <button type="button" className="user-chip" onClick={onLogout} aria-label="Log out">
+        <span>{userName}</span>
+        <LogOut aria-hidden="true" />
+      </button>
       <div>
         <span>Solved</span>
         <strong>{stats.solvedIds.length}</strong>
