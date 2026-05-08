@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PuzzleCard from "./PuzzleCard";
 import type { PuzzleSoundCue } from "../hooks/usePuzzleAudio";
 import type { Puzzle, PuzzleOutcome } from "../types";
@@ -46,7 +46,7 @@ function getWindowStartForIndex(
   return currentStart;
 }
 
-export default function PuzzleFeed({
+function PuzzleFeed({
   puzzles,
   onOutcome,
   onOpenFilters,
@@ -236,3 +236,5 @@ export default function PuzzleFeed({
     </section>
   );
 }
+
+export default memo(PuzzleFeed);

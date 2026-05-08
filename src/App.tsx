@@ -25,13 +25,17 @@ const puzzles = rawPuzzles as Puzzle[];
 export default function App() {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [stats, setStats] = useState(EMPTY_STATS);
+  const [excludedSolvedIds, setExcludedSolvedIds] = useState<string[]>([]);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [filters, setFilters] = useState<PuzzleFilters>(DEFAULT_FILTERS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { soundEnabled, toggleSound, playPuzzleCue } = usePuzzleAudio();
 
   const availableThemes = useMemo(() => getAvailableThemes(puzzles), []);
-  const solvedPuzzleIds = useMemo(() => new Set(stats.solvedIds), [stats.solvedIds]);
+  const solvedPuzzleIds = useMemo(
+    () => new Set(excludedSolvedIds),
+    [excludedSolvedIds]
+  );
   const visiblePuzzles = useMemo(
     () =>
       filterPuzzles(puzzles, filters).filter(
@@ -59,6 +63,7 @@ export default function App() {
 
       setCurrentUser(savedUser);
       setStats(savedStats);
+      setExcludedSolvedIds(savedStats.solvedIds);
       setIsAuthReady(true);
     }
 
@@ -76,12 +81,14 @@ export default function App() {
     saveCurrentUser(normalizedUserName);
     setCurrentUser(normalizedUserName);
     setStats(savedStats);
+    setExcludedSolvedIds(savedStats.solvedIds);
   }, []);
 
   const handleLogout = useCallback(() => {
     clearCurrentUser();
     setCurrentUser(null);
     setStats(EMPTY_STATS);
+    setExcludedSolvedIds([]);
   }, []);
 
   const recordOutcome = useCallback((puzzleId: string, outcome: PuzzleOutcome) => {
