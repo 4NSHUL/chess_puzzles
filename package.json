@@ -1,0 +1,29 @@
+{
+  "name": "chess-puzzles",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mobile-first chess puzzle feed with vertical reels-style scrolling.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "chess.js": "^1.0.0",
+    "lucide-react": "^0.468.0",
+    "next": "^15.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
