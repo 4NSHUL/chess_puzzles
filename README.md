@@ -26,3 +26,5 @@ Use the repository root as the Vercel project root.
 - Install command: `npm install`
 
 Vercel detects Next.js automatically from `next` in `package.json`.
+
+This app pins Next.js and Node.js versions so Vercel builds stay deterministic.
