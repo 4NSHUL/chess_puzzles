@@ -7,6 +7,7 @@ import {
   createPuzzleRun,
   revealSolution
 } from "../lib/puzzleEngine";
+import { formatElapsedTime } from "../lib/time";
 import type { Puzzle } from "../types";
 
 const startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -109,5 +110,11 @@ describe("puzzle engine", () => {
         expect(move, `${puzzle.id} failed at ${uci}`).not.toBeNull();
       }
     }
+  });
+
+  it("formats puzzle timer values for the solving UI", () => {
+    expect(formatElapsedTime(0)).toBe("0:00");
+    expect(formatElapsedTime(9)).toBe("0:09");
+    expect(formatElapsedTime(125)).toBe("2:05");
   });
 });

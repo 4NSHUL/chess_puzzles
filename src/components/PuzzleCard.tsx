@@ -2,20 +2,37 @@ import { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import ChessPuzzleBoard from "./ChessPuzzleBoard";
 import PuzzleControls from "./PuzzleControls";
+import type { PuzzleSoundCue } from "../hooks/usePuzzleAudio";
 import { attemptPuzzleMove, createPuzzleRun, revealSolution } from "../lib/puzzleEngine";
+import { formatElapsedTime } from "../lib/time";
 import type { Puzzle, PuzzleOutcome, PuzzleRunState } from "../types";
 
 interface PuzzleCardProps {
   puzzle: Puzzle;
   index: number;
   total: number;
+  isActive: boolean;
   onOutcome: (puzzleId: string, outcome: PuzzleOutcome) => void;
   onAdvance: () => void;
   onOpenFilters: () => void;
+  onSoundEvent: (cue: PuzzleSoundCue) => void;
+  onToggleSound: () => void;
+  soundEnabled: boolean;
 }
 
 const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
-  { puzzle, index, total, onOutcome, onAdvance, onOpenFilters },
+  {
+    puzzle,
+    index,
+    total,
+    isActive,
+    onOutcome,
+    onAdvance,
+    onOpenFilters,
+    onSoundEvent,
+    onToggleSound,
+    soundEnabled
+  },
   ref
 ) {
   const [run, setRun] = useState<PuzzleRunState>(() => createPuzzleRun(puzzle));
@@ -23,6 +40,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
   const [hintVisible, setHintVisible] = useState(false);
   const [solutionLine, setSolutionLine] = useState<string[]>([]);
   const [feedback, setFeedback] = useState("Find the best move.");
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const reportedOutcomes = useRef(new Set<PuzzleOutcome>());
 
   const game = useMemo(() => new Chess(run.fen), [run.fen]);
@@ -38,8 +56,21 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     setHintVisible(false);
     setSolutionLine([]);
     setFeedback("Find the best move.");
+    setElapsedSeconds(0);
     reportedOutcomes.current = new Set();
   }, [puzzle]);
+
+  useEffect(() => {
+    if (!isActive || run.completed) {
+      return undefined;
+    }
+
+    const timer = window.setInterval(() => {
+      setElapsedSeconds((current) => current + 1);
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [isActive, run.completed]);
 
   useEffect(() => {
     if (run.status !== "solved") {
@@ -70,6 +101,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
 
     if (!result.accepted) {
       reportOnce("failed");
+      onSoundEvent("mistake");
       setFeedback(
         result.reason === "illegal"
           ? "That move is not legal in this position."
@@ -80,11 +112,17 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
 
     if (result.state.completed) {
       reportOnce("solved");
-      setFeedback(`Solved with ${result.attempted?.san ?? "the best move"}.`);
+      onSoundEvent("solved");
+      setFeedback(
+        `Solved with ${result.attempted?.san ?? "the best move"} in ${formatElapsedTime(
+          elapsedSeconds
+        )}.`
+      );
       return;
     }
 
-    const reply = result.autoMoves.at(-1);
+    onSoundEvent("correct");
+    const reply = result.autoMoves[result.autoMoves.length - 1];
     setFeedback(
       reply
         ? `Good. Opponent replied ${reply.san}. Continue the line.`
@@ -97,6 +135,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     setSelectedSquare(null);
     setHintVisible(false);
     setSolutionLine([]);
+    setElapsedSeconds(0);
     setFeedback("Position reset.");
   }
 
@@ -113,6 +152,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
       completed: true
     }));
     setFeedback("Skipped.");
+    onSoundEvent("skip");
     onAdvance();
   }
 
@@ -127,6 +167,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     setRun(solution.state);
     setSolutionLine(solution.moves.map((move) => move.san));
     setFeedback("Solution shown.");
+    onSoundEvent("solution");
   }
 
   return (
@@ -163,6 +204,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
             <p className="feedback-text">{feedback}</p>
           </div>
           <div className="status-cluster">
+            <span className="timer-pill">{formatElapsedTime(elapsedSeconds)}</span>
             <span>{puzzle.difficulty}</span>
             <span>{puzzle.sideToMove === "w" ? "White" : "Black"} to move</span>
           </div>
@@ -188,7 +230,9 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
         onSkip={handleSkip}
         onSolution={handleSolution}
         onOpenFilters={onOpenFilters}
+        onToggleSound={onToggleSound}
         canMove={!run.completed && game.turn() === puzzle.sideToMove}
+        soundEnabled={soundEnabled}
       />
 
       {run.status === "solved" ? (

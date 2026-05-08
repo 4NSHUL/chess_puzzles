@@ -2,6 +2,13 @@
 
 A mobile-first Next.js chess puzzle solving app with a vertical reels-style feed.
 
+## Features
+
+- Per-puzzle solving timer
+- Hardness-level, theme, and rating filters
+- Focus-style generated sound loop and puzzle feedback cues
+- Browser tab icon for deployed URLs
+
 ## Local development
 
 ```bash

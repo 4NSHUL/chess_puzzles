@@ -5,6 +5,7 @@ import PuzzleFeed from "./components/PuzzleFeed";
 import PuzzleStats from "./components/PuzzleStats";
 import FilterPanel from "./components/FilterPanel";
 import rawPuzzles from "./data/puzzles.json";
+import { usePuzzleAudio } from "./hooks/usePuzzleAudio";
 import { DEFAULT_FILTERS, filterPuzzles, getAvailableThemes } from "./lib/filters";
 import { loadStats, saveStats, updateStats } from "./lib/storage";
 import type { Puzzle, PuzzleFilters, PuzzleOutcome } from "./types";
@@ -15,6 +16,7 @@ export default function App() {
   const [stats, setStats] = useState(loadStats);
   const [filters, setFilters] = useState<PuzzleFilters>(DEFAULT_FILTERS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const { soundEnabled, toggleSound, playPuzzleCue } = usePuzzleAudio();
 
   const availableThemes = useMemo(() => getAvailableThemes(puzzles), []);
   const visiblePuzzles = useMemo(
@@ -42,6 +44,9 @@ export default function App() {
         puzzles={visiblePuzzles}
         onOutcome={recordOutcome}
         onOpenFilters={() => setIsFilterOpen(true)}
+        onSoundEvent={playPuzzleCue}
+        onToggleSound={toggleSound}
+        soundEnabled={soundEnabled}
       />
 
       <FilterPanel

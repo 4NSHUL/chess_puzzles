@@ -1,5 +1,14 @@
 import type { Puzzle, PuzzleDifficulty, PuzzleFilters } from "../types";
 
+export type HardnessLevel = PuzzleDifficulty | "All";
+
+export const HARDNESS_LEVELS: HardnessLevel[] = [
+  "All",
+  "Beginner",
+  "Intermediate",
+  "Advanced"
+];
+
 export const DEFAULT_FILTERS: PuzzleFilters = {
   difficulties: ["Beginner", "Intermediate", "Advanced"],
   themes: [],
@@ -36,6 +45,25 @@ export function toggleDifficulty(
     ...filters,
     difficulties: [...next]
   };
+}
+
+export function applyHardnessLevel(
+  filters: PuzzleFilters,
+  level: HardnessLevel
+): PuzzleFilters {
+  return {
+    ...filters,
+    difficulties:
+      level === "All" ? ["Beginner", "Intermediate", "Advanced"] : [level]
+  };
+}
+
+export function getActiveHardness(filters: PuzzleFilters): HardnessLevel {
+  if (filters.difficulties.length !== 1) {
+    return "All";
+  }
+
+  return filters.difficulties[0];
 }
 
 export function toggleTheme(filters: PuzzleFilters, theme: string): PuzzleFilters {

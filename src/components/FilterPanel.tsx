@@ -1,10 +1,12 @@
 import { X } from "lucide-react";
 import {
+  applyHardnessLevel,
   DEFAULT_FILTERS,
-  toggleDifficulty,
+  getActiveHardness,
+  HARDNESS_LEVELS,
   toggleTheme
 } from "../lib/filters";
-import type { PuzzleDifficulty, PuzzleFilters } from "../types";
+import type { PuzzleFilters } from "../types";
 
 interface FilterPanelProps {
   filters: PuzzleFilters;
@@ -13,8 +15,6 @@ interface FilterPanelProps {
   onChange: (filters: PuzzleFilters) => void;
   onClose: () => void;
 }
-
-const difficulties: PuzzleDifficulty[] = ["Beginner", "Intermediate", "Advanced"];
 
 export default function FilterPanel({
   filters,
@@ -26,6 +26,8 @@ export default function FilterPanel({
   if (!open) {
     return null;
   }
+
+  const activeHardness = getActiveHardness(filters);
 
   return (
     <div
@@ -42,17 +44,18 @@ export default function FilterPanel({
           </button>
         </header>
 
-        <section className="filter-group" aria-labelledby="difficulty-heading">
-          <h3 id="difficulty-heading">Difficulty</h3>
-          <div className="chip-grid">
-            {difficulties.map((difficulty) => (
-              <label key={difficulty} className="filter-chip">
+        <section className="filter-group" aria-labelledby="hardness-heading">
+          <h3 id="hardness-heading">Hardness level</h3>
+          <div className="chip-grid" role="radiogroup" aria-labelledby="hardness-heading">
+            {HARDNESS_LEVELS.map((level) => (
+              <label key={level} className="filter-chip">
                 <input
-                  type="checkbox"
-                  checked={filters.difficulties.includes(difficulty)}
-                  onChange={() => onChange(toggleDifficulty(filters, difficulty))}
+                  type="radio"
+                  name="hardness"
+                  checked={activeHardness === level}
+                  onChange={() => onChange(applyHardnessLevel(filters, level))}
                 />
-                <span>{difficulty}</span>
+                <span>{level}</span>
               </label>
             ))}
           </div>

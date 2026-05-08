@@ -28,6 +28,10 @@ body {
     linear-gradient(145deg, #080a0d 0%, #141311 56%, #08110d 100%);
 }
 
+svg {
+  flex-shrink: 0;
+}
+
 button,
 input {
   font: inherit;
@@ -223,6 +227,13 @@ button {
   font-size: 0.8rem;
 }
 
+.timer-pill {
+  color: #49c7b4 !important;
+  border-color: rgba(73, 199, 180, 0.38) !important;
+  background: rgba(73, 199, 180, 0.12) !important;
+  font-variant-numeric: tabular-nums;
+}
+
 .context-note {
   min-height: 2rem;
   color: #ede5d4;
@@ -236,7 +247,7 @@ button {
   width: min(calc(100% - 1rem), 42rem);
   min-height: 4.65rem;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.35rem;
   padding: 0.45rem;
   border: 1px solid rgba(245, 240, 229, 0.12);
