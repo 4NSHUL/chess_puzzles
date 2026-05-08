@@ -1,4 +1,5 @@
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { MutableRefObject } from "react";
 import { Chess } from "chess.js";
 import ChessPuzzleBoard from "./ChessPuzzleBoard";
 import PuzzleControls from "./PuzzleControls";
@@ -7,6 +8,40 @@ import { getProgressiveHint, MAX_HINT_LEVEL } from "../lib/hints";
 import { attemptPuzzleMove, createPuzzleRun, revealSolution } from "../lib/puzzleEngine";
 import { formatElapsedTime } from "../lib/time";
 import type { Puzzle, PuzzleOutcome, PuzzleRunState } from "../types";
+
+function PuzzleTimer({
+  active,
+  completed,
+  elapsedRef,
+  resetKey
+}: {
+  active: boolean;
+  completed: boolean;
+  elapsedRef: MutableRefObject<number>;
+  resetKey: number;
+}) {
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    elapsedRef.current = 0;
+    setElapsedSeconds(0);
+  }, [elapsedRef, resetKey]);
+
+  useEffect(() => {
+    if (!active || completed) {
+      return undefined;
+    }
+
+    const timer = window.setInterval(() => {
+      elapsedRef.current += 1;
+      setElapsedSeconds(elapsedRef.current);
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [active, completed, elapsedRef]);
+
+  return <span className="timer-pill">{formatElapsedTime(elapsedSeconds)}</span>;
+}
 
 interface PuzzleCardProps {
   puzzle: Puzzle;
@@ -41,9 +76,10 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
   const [hintVisible, setHintVisible] = useState(false);
   const [solutionLine, setSolutionLine] = useState<string[]>([]);
   const [feedback, setFeedback] = useState("Find the best move.");
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [hintLevel, setHintLevel] = useState(0);
   const [hintText, setHintText] = useState("");
+  const [timerResetKey, setTimerResetKey] = useState(0);
+  const elapsedRef = useRef(0);
   const reportedOutcomes = useRef(new Set<PuzzleOutcome>());
 
   const game = useMemo(() => new Chess(run.fen), [run.fen]);
@@ -59,23 +95,12 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     setHintVisible(false);
     setSolutionLine([]);
     setFeedback("Find the best move.");
-    setElapsedSeconds(0);
     setHintLevel(0);
     setHintText("");
+    setTimerResetKey((current) => current + 1);
     reportedOutcomes.current = new Set();
   }, [puzzle]);
 
-  useEffect(() => {
-    if (!isActive || run.completed) {
-      return undefined;
-    }
-
-    const timer = window.setInterval(() => {
-      setElapsedSeconds((current) => current + 1);
-    }, 1000);
-
-    return () => window.clearInterval(timer);
-  }, [isActive, run.completed]);
 
   const reportOnce = useCallback((outcome: PuzzleOutcome) => {
     if (reportedOutcomes.current.has(outcome)) {
@@ -123,7 +148,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
       onSoundEvent("solved");
       setFeedback(
         `Solved with ${result.attempted?.san ?? "the best move"} in ${formatElapsedTime(
-          elapsedSeconds
+          elapsedRef.current
         )}.`
       );
       return;
@@ -145,9 +170,9 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     setSelectedSquare(null);
     setHintVisible(false);
     setSolutionLine([]);
-    setElapsedSeconds(0);
     setHintLevel(0);
     setHintText("");
+    setTimerResetKey((current) => current + 1);
     setFeedback("Position reset.");
   }
 
@@ -221,7 +246,12 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
             <p className="feedback-text">{feedback}</p>
           </div>
           <div className="status-cluster">
-            <span className="timer-pill">{formatElapsedTime(elapsedSeconds)}</span>
+            <PuzzleTimer
+              active={isActive}
+              completed={run.completed}
+              elapsedRef={elapsedRef}
+              resetKey={timerResetKey}
+            />
             <span>{puzzle.difficulty}</span>
             <span>{puzzle.sideToMove === "w" ? "White" : "Black"} to move</span>
           </div>

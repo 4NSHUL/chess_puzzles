@@ -157,44 +157,21 @@ button {
 
 .piece {
   user-select: none;
-  width: 78%;
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
+  line-height: 1;
+  font-family: "Apple Symbols", "Segoe UI Symbol", "Noto Sans Symbols 2", serif;
+  font-size: clamp(1.9rem, 10vw, 4.1rem);
+  font-weight: 400;
   filter: drop-shadow(0 0.18rem 0.16rem rgba(0, 0, 0, 0.35));
 }
 
-.piece-icon {
-  width: 100%;
-  height: 100%;
-  display: block;
+.piece--w {
+  color: #fff7e2;
+  -webkit-text-stroke: 0.045rem #20251f;
 }
 
-.piece-shape,
-.piece-detail--stroke {
-  stroke-linejoin: round;
-  stroke-linecap: round;
-  stroke-width: 5;
-}
-
-.piece-icon--w .piece-shape {
-  fill: #fff7e2;
-  stroke: #20251f;
-}
-
-.piece-icon--w .piece-detail {
-  fill: #20251f;
-  stroke: #20251f;
-}
-
-.piece-icon--b .piece-shape {
-  fill: #171814;
-  stroke: #f1e5c5;
-}
-
-.piece-icon--b .piece-detail {
-  fill: #f1e5c5;
-  stroke: #f1e5c5;
+.piece--b {
+  color: #171814;
+  -webkit-text-stroke: 0.035rem #f1e5c5;
 }
 
 .coordinate {
