@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
 import { Chess } from "chess.js";
 import ChessPuzzleBoard from "./ChessPuzzleBoard";
@@ -49,7 +49,7 @@ interface PuzzleCardProps {
   total: number;
   isActive: boolean;
   onOutcome: (puzzleId: string, outcome: PuzzleOutcome) => void;
-  onAdvance: () => void;
+  onAdvance: (index: number) => void;
   onOpenFilters: () => void;
   onSoundEvent: (cue: PuzzleSoundCue) => void;
   onToggleSound: () => void;
@@ -117,11 +117,11 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
 
     const timer = window.setTimeout(() => {
       reportOnce("solved");
-      onAdvance();
+      onAdvance(index);
     }, 850);
 
     return () => window.clearTimeout(timer);
-  }, [onAdvance, reportOnce, run.status]);
+  }, [index, onAdvance, reportOnce, run.status]);
 
   function handleMove(from: string, to: string) {
     const result = attemptPuzzleMove(puzzle, run, {
@@ -195,7 +195,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     }));
     setFeedback("Skipped.");
     onSoundEvent("skip");
-    onAdvance();
+    onAdvance(index);
   }
 
   function handleSolution() {
@@ -216,6 +216,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     <article
       ref={ref}
       className={`puzzle-card puzzle-card--${run.status}`}
+      data-puzzle-index={index}
       aria-label={`Puzzle ${index + 1} of ${total}`}
     >
       <div className="puzzle-card__content">
@@ -291,4 +292,4 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
   );
 });
 
-export default PuzzleCard;
+export default memo(PuzzleCard);

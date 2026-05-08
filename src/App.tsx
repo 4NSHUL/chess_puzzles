@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import PuzzleFeed from "./components/PuzzleFeed";
 import PuzzleStats from "./components/PuzzleStats";
 import FilterPanel from "./components/FilterPanel";
@@ -69,22 +69,22 @@ export default function App() {
     };
   }, []);
 
-  async function handleLogin(userName: string) {
+  const handleLogin = useCallback(async (userName: string) => {
     const normalizedUserName = normalizeUserName(userName);
     const savedStats = await loadUserStats(normalizedUserName);
 
     saveCurrentUser(normalizedUserName);
     setCurrentUser(normalizedUserName);
     setStats(savedStats);
-  }
+  }, []);
 
-  function handleLogout() {
+  const handleLogout = useCallback(() => {
     clearCurrentUser();
     setCurrentUser(null);
     setStats(EMPTY_STATS);
-  }
+  }, []);
 
-  function recordOutcome(puzzleId: string, outcome: PuzzleOutcome) {
+  const recordOutcome = useCallback((puzzleId: string, outcome: PuzzleOutcome) => {
     if (!currentUser) {
       return;
     }
@@ -94,7 +94,10 @@ export default function App() {
       void saveUserStats(currentUser, next).catch(() => undefined);
       return next;
     });
-  }
+  }, [currentUser]);
+
+  const openFilters = useCallback(() => setIsFilterOpen(true), []);
+  const closeFilters = useCallback(() => setIsFilterOpen(false), []);
 
   if (!isAuthReady) {
     return (
@@ -124,7 +127,7 @@ export default function App() {
       <PuzzleFeed
         puzzles={visiblePuzzles}
         onOutcome={recordOutcome}
-        onOpenFilters={() => setIsFilterOpen(true)}
+        onOpenFilters={openFilters}
         onSoundEvent={playPuzzleCue}
         onToggleSound={toggleSound}
         soundEnabled={soundEnabled}
@@ -135,7 +138,7 @@ export default function App() {
         themes={availableThemes}
         open={isFilterOpen}
         onChange={setFilters}
-        onClose={() => setIsFilterOpen(false)}
+        onClose={closeFilters}
       />
     </main>
   );

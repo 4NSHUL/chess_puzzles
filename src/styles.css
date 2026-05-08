@@ -69,6 +69,15 @@ button {
   justify-content: center;
   padding: 5.25rem 1rem 6.75rem;
   overflow: hidden;
+  contain: layout paint style;
+  content-visibility: auto;
+  contain-intrinsic-size: 100dvh;
+}
+
+.feed-spacer {
+  min-height: 0;
+  scroll-snap-align: none;
+  pointer-events: none;
 }
 
 .puzzle-card__content {

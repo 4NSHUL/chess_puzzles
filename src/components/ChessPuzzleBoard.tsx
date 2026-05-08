@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import type { DragEvent } from "react";
 import { Chess, type Square } from "chess.js";
 import type { PlayerColor } from "../types";
@@ -23,7 +23,7 @@ const pieceGlyphs: Record<string, string> = {
   k: "♚"
 };
 
-export default function ChessPuzzleBoard({
+function ChessPuzzleBoard({
   fen,
   orientation,
   selectedSquare,
@@ -125,3 +125,5 @@ export default function ChessPuzzleBoard({
     </div>
   );
 }
+
+export default memo(ChessPuzzleBoard);
