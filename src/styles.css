@@ -244,6 +244,24 @@ button {
   font-size: 0.8rem;
 }
 
+.options-toggle {
+  display: none;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgba(73, 199, 180, 0.38);
+  border-radius: 999px;
+  padding: 0.38rem 0.62rem;
+  background: rgba(73, 199, 180, 0.12);
+  color: #dffaf5;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.options-toggle svg {
+  width: 1rem;
+  height: 1rem;
+}
+
 .timer-pill {
   color: #49c7b4 !important;
   border-color: rgba(73, 199, 180, 0.38) !important;
@@ -600,9 +618,10 @@ button {
   }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 640px) {
   .puzzle-card {
     padding-top: 7rem;
+    padding-bottom: 1rem;
     padding-left: 0.65rem;
     padding-right: 0.65rem;
   }
@@ -616,8 +635,39 @@ button {
     justify-content: flex-start;
   }
 
+  .options-toggle {
+    display: inline-flex;
+  }
+
+  .action-bar {
+    position: static;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    width: 100%;
+    min-height: auto;
+    display: none;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 0.1rem;
+    z-index: 1;
+  }
+
+  .action-bar--open {
+    display: grid;
+  }
+
+  .action-bar button {
+    min-height: 2.8rem;
+  }
+
   .action-bar button span {
     font-size: 0.62rem;
+  }
+
+  .move-state {
+    position: static;
+    grid-column: 1 / -1;
+    text-align: center;
   }
 
   .stats-bar {

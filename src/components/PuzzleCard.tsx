@@ -1,6 +1,7 @@
-import { forwardRef, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { MutableRefObject } from "react";
 import { Chess } from "chess.js";
+import { SlidersHorizontal } from "lucide-react";
 import ChessPuzzleBoard from "./ChessPuzzleBoard";
 import PuzzleControls from "./PuzzleControls";
 import type { PuzzleSoundCue } from "../hooks/usePuzzleAudio";
@@ -78,9 +79,11 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
   const [feedback, setFeedback] = useState("Find the best move.");
   const [hintLevel, setHintLevel] = useState(0);
   const [hintText, setHintText] = useState("");
+  const [controlsOpen, setControlsOpen] = useState(false);
   const [timerResetKey, setTimerResetKey] = useState(0);
   const elapsedRef = useRef(0);
   const reportedOutcomes = useRef(new Set<PuzzleOutcome>());
+  const controlsId = useId();
 
   const game = useMemo(() => new Chess(run.fen), [run.fen]);
   const progressLabel = run.completed
@@ -97,6 +100,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     setFeedback("Find the best move.");
     setHintLevel(0);
     setHintText("");
+    setControlsOpen(false);
     setTimerResetKey((current) => current + 1);
     reportedOutcomes.current = new Set();
   }, [puzzle]);
@@ -255,6 +259,16 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
             />
             <span>{puzzle.difficulty}</span>
             <span>{puzzle.sideToMove === "w" ? "White" : "Black"} to move</span>
+            <button
+              type="button"
+              className="options-toggle"
+              aria-controls={controlsId}
+              aria-expanded={controlsOpen}
+              onClick={() => setControlsOpen((current) => !current)}
+            >
+              <SlidersHorizontal aria-hidden="true" />
+              <span>Options</span>
+            </button>
           </div>
         </section>
 
@@ -270,18 +284,20 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
             {puzzle.explanation ? ` - ${puzzle.explanation}` : ""}
           </p>
         ) : null}
-      </div>
 
-      <PuzzleControls
-        onHint={handleHint}
-        onReset={handleReset}
-        onSkip={handleSkip}
-        onSolution={handleSolution}
-        onOpenFilters={onOpenFilters}
-        onToggleSound={onToggleSound}
-        canMove={!run.completed && game.turn() === puzzle.sideToMove}
-        soundEnabled={soundEnabled}
-      />
+        <PuzzleControls
+          id={controlsId}
+          open={controlsOpen}
+          onHint={handleHint}
+          onReset={handleReset}
+          onSkip={handleSkip}
+          onSolution={handleSolution}
+          onOpenFilters={onOpenFilters}
+          onToggleSound={onToggleSound}
+          canMove={!run.completed && game.turn() === puzzle.sideToMove}
+          soundEnabled={soundEnabled}
+        />
+      </div>
 
       {run.status === "solved" ? (
         <div className="success-burst" aria-hidden="true">

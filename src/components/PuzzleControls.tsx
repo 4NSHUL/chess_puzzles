@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 
 interface PuzzleControlsProps {
+  id: string;
+  open: boolean;
   onHint: () => void;
   onReset: () => void;
   onSkip: () => void;
@@ -20,6 +22,8 @@ interface PuzzleControlsProps {
 }
 
 export default function PuzzleControls({
+  id,
+  open,
   onHint,
   onReset,
   onSkip,
@@ -30,7 +34,11 @@ export default function PuzzleControls({
   soundEnabled
 }: PuzzleControlsProps) {
   return (
-    <nav className="action-bar" aria-label="Puzzle actions">
+    <nav
+      id={id}
+      className={`action-bar${open ? " action-bar--open" : ""}`}
+      aria-label="Puzzle actions"
+    >
       <button type="button" onClick={onHint} aria-label="Show hint">
         <Lightbulb aria-hidden="true" />
         <span>Hint</span>
