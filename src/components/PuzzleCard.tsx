@@ -3,6 +3,7 @@ import type { MutableRefObject } from "react";
 import { Chess } from "chess.js";
 import { SlidersHorizontal } from "lucide-react";
 import ChessPuzzleBoard from "./ChessPuzzleBoard";
+import type { BoardLastMove } from "./ChessPuzzleBoard";
 import PuzzleControls from "./PuzzleControls";
 import type { PuzzleSoundCue } from "../hooks/usePuzzleAudio";
 import { getProgressiveHint, MAX_HINT_LEVEL } from "../lib/hints";
@@ -80,6 +81,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
   const [hintLevel, setHintLevel] = useState(0);
   const [hintText, setHintText] = useState("");
   const [controlsOpen, setControlsOpen] = useState(false);
+  const [lastMove, setLastMove] = useState<BoardLastMove | null>(null);
   const [timerResetKey, setTimerResetKey] = useState(0);
   const elapsedRef = useRef(0);
   const reportedOutcomes = useRef(new Set<PuzzleOutcome>());
@@ -101,6 +103,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     setHintLevel(0);
     setHintText("");
     setControlsOpen(false);
+    setLastMove(null);
     setTimerResetKey((current) => current + 1);
     reportedOutcomes.current = new Set();
   }, [puzzle]);
@@ -138,6 +141,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     setRun(result.state);
 
     if (!result.accepted) {
+      setLastMove(null);
       reportOnce("failed");
       onSoundEvent("mistake");
       setFeedback(
@@ -146,6 +150,14 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
           : "Good legal move, but not the puzzle solution."
       );
       return;
+    }
+
+    const animatedMove =
+      result.autoMoves.length > 0
+        ? result.autoMoves[result.autoMoves.length - 1]
+        : result.attempted;
+    if (animatedMove) {
+      setLastMove(createBoardLastMove(animatedMove.uci, result.state.moveIndex));
     }
 
     if (result.state.completed) {
@@ -176,6 +188,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     setSolutionLine([]);
     setHintLevel(0);
     setHintText("");
+    setLastMove(null);
     setTimerResetKey((current) => current + 1);
     setFeedback("Position reset.");
   }
@@ -212,6 +225,10 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     reportOnce("failed");
     setRun(solution.state);
     setSolutionLine(solution.moves.map((move) => move.san));
+    if (solution.moves.length > 0) {
+      const finalMove = solution.moves[solution.moves.length - 1];
+      setLastMove(createBoardLastMove(finalMove.uci, solution.state.moveIndex));
+    }
     setFeedback("Solution shown.");
     onSoundEvent("solution");
   }
@@ -241,6 +258,7 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
           orientation={puzzle.sideToMove}
           selectedSquare={selectedSquare}
           disabled={run.completed}
+          lastMove={lastMove}
           onSelectSquare={setSelectedSquare}
           onMove={handleMove}
         />
@@ -307,5 +325,13 @@ const PuzzleCard = forwardRef<HTMLElement, PuzzleCardProps>(function PuzzleCard(
     </article>
   );
 });
+
+function createBoardLastMove(uci: string, token: number) {
+  return {
+    from: uci.slice(0, 2),
+    to: uci.slice(2, 4),
+    token: `${token}-${uci}`
+  };
+}
 
 export default memo(PuzzleCard);

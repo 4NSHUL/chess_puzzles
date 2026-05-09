@@ -1,4 +1,5 @@
 export type PlayerColor = "w" | "b";
+export type AppMode = "menu" | "puzzle" | "game";
 
 export type PuzzleDifficulty = "Beginner" | "Intermediate" | "Advanced";
 
@@ -48,4 +49,26 @@ export interface PuzzleFilters {
   difficulties: PuzzleDifficulty[];
   themes: string[];
   ratingMax: number;
+}
+
+export type ChessGameStatus = "active" | "checkmate" | "draw" | "stalemate";
+
+export interface ChessGameMove {
+  uci: string;
+  san: string;
+  color: PlayerColor;
+  fenAfter: string;
+  playedAt: string;
+}
+
+export interface ChessGameRecord {
+  id: string;
+  createdBy: string;
+  whitePlayer: string;
+  blackPlayer: string;
+  fen: string;
+  moves: ChessGameMove[];
+  status: ChessGameStatus;
+  createdAt: string;
+  updatedAt: string;
 }

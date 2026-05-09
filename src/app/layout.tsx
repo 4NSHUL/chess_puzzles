@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import "../styles.css";
 
 export const metadata: Metadata = {
-  title: "Chess Puzzle Reels",
-  description: "Solve chess tactics in a vertical reels-style puzzle feed.",
+  title: "Chess Training Reels",
+  description: "Solve chess tactics and play saved two-player games.",
   icons: {
     icon: [
       {

@@ -1,4 +1,4 @@
-import { LogOut } from "lucide-react";
+import { LayoutGrid, LogOut } from "lucide-react";
 import type { PuzzleStatsSnapshot } from "../types";
 
 interface PuzzleStatsProps {
@@ -7,6 +7,7 @@ interface PuzzleStatsProps {
   totalPuzzles: number;
   visiblePuzzles: number;
   onLogout: () => void;
+  onOpenModes: () => void;
 }
 
 export default function PuzzleStats({
@@ -14,13 +15,18 @@ export default function PuzzleStats({
   userName,
   totalPuzzles,
   visiblePuzzles,
-  onLogout
+  onLogout,
+  onOpenModes
 }: PuzzleStatsProps) {
   return (
     <aside className="stats-bar" aria-label="Puzzle statistics">
       <button type="button" className="user-chip" onClick={onLogout} aria-label="Log out">
         <span>{userName}</span>
         <LogOut aria-hidden="true" />
+      </button>
+      <button type="button" className="mode-chip" onClick={onOpenModes}>
+        <LayoutGrid aria-hidden="true" />
+        <span>Modes</span>
       </button>
       <div>
         <span>Solved</span>

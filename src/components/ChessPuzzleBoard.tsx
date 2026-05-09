@@ -1,13 +1,20 @@
 import { memo, useMemo } from "react";
-import type { DragEvent } from "react";
+import type { CSSProperties, DragEvent } from "react";
 import { Chess, type Square } from "chess.js";
 import type { PlayerColor } from "../types";
+
+export interface BoardLastMove {
+  from: string;
+  to: string;
+  token: string;
+}
 
 interface ChessPuzzleBoardProps {
   fen: string;
   orientation: PlayerColor;
   selectedSquare: string | null;
   disabled: boolean;
+  lastMove?: BoardLastMove | null;
   onSelectSquare: (square: string | null) => void;
   onMove: (from: string, to: string) => void;
 }
@@ -28,6 +35,7 @@ function ChessPuzzleBoard({
   orientation,
   selectedSquare,
   disabled,
+  lastMove,
   onSelectSquare,
   onMove
 }: ChessPuzzleBoardProps) {
@@ -92,6 +100,12 @@ function ChessPuzzleBoard({
           const piece = game.get(square as Square);
           const isLight = (files.indexOf(file) + rank) % 2 === 1;
           const isSelected = selectedSquare === square;
+          const isLastMoveSquare =
+            lastMove?.from === square || lastMove?.to === square;
+          const isMovedPiece = Boolean(lastMove && lastMove.to === square);
+          const moveStyle = lastMove && isMovedPiece
+            ? getMoveStyle(lastMove, displayFiles, displayRanks)
+            : undefined;
 
           return (
             <button
@@ -101,7 +115,8 @@ function ChessPuzzleBoard({
               className={[
                 "square",
                 isLight ? "square--light" : "square--dark",
-                isSelected ? "square--selected" : ""
+                isSelected ? "square--selected" : "",
+                isLastMoveSquare ? "square--last-move" : ""
               ].join(" ")}
               aria-label={`${square}${piece ? ` ${piece.color === "w" ? "white" : "black"} ${piece.type}` : " empty"}`}
               onClick={() => handleSquareClick(square, piece?.color)}
@@ -109,7 +124,17 @@ function ChessPuzzleBoard({
             >
               {piece ? (
                 <span
-                  className={`piece piece--${piece.color}`}
+                  key={
+                    isMovedPiece
+                      ? `${piece.color}${piece.type}-${square}-${lastMove?.token ?? "move"}`
+                      : `${piece.color}${piece.type}-${square}`
+                  }
+                  className={[
+                    "piece",
+                    `piece--${piece.color}`,
+                    isMovedPiece ? "piece--moved" : ""
+                  ].join(" ")}
+                  style={moveStyle}
                   draggable={!disabled && piece.color === game.turn()}
                   onDragStart={(event) => handleDragStart(event, square, piece.color)}
                 >
@@ -124,6 +149,42 @@ function ChessPuzzleBoard({
       )}
     </div>
   );
+}
+
+function getMoveStyle(
+  lastMove: BoardLastMove,
+  displayFiles: string[],
+  displayRanks: number[]
+) {
+  const from = getSquarePosition(lastMove.from, displayFiles, displayRanks);
+  const to = getSquarePosition(lastMove.to, displayFiles, displayRanks);
+
+  if (!from || !to) {
+    return undefined;
+  }
+
+  return {
+    "--move-x": `${(from.fileIndex - to.fileIndex) * 100}%`,
+    "--move-y": `${(from.rankIndex - to.rankIndex) * 100}%`
+  } as CSSProperties;
+}
+
+function getSquarePosition(
+  square: string,
+  displayFiles: string[],
+  displayRanks: number[]
+) {
+  const fileIndex = displayFiles.indexOf(square[0]);
+  const rankIndex = displayRanks.indexOf(Number(square[1]));
+
+  if (fileIndex < 0 || rankIndex < 0) {
+    return null;
+  }
+
+  return {
+    fileIndex,
+    rankIndex
+  };
 }
 
 export default memo(ChessPuzzleBoard);

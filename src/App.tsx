@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import GameMode from "./components/GameMode";
+import ModeSelect from "./components/ModeSelect";
 import PuzzleFeed from "./components/PuzzleFeed";
 import PuzzleStats from "./components/PuzzleStats";
 import FilterPanel from "./components/FilterPanel";
@@ -18,12 +20,13 @@ import {
   saveUserStats,
   updateStats
 } from "./lib/storage";
-import type { Puzzle, PuzzleFilters, PuzzleOutcome } from "./types";
+import type { AppMode, Puzzle, PuzzleFilters, PuzzleOutcome } from "./types";
 
 const puzzles = rawPuzzles as Puzzle[];
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [mode, setMode] = useState<AppMode>("menu");
   const [stats, setStats] = useState(EMPTY_STATS);
   const [excludedSolvedIds, setExcludedSolvedIds] = useState<string[]>([]);
   const [isAuthReady, setIsAuthReady] = useState(false);
@@ -64,6 +67,7 @@ export default function App() {
       setCurrentUser(savedUser);
       setStats(savedStats);
       setExcludedSolvedIds(savedStats.solvedIds);
+      setMode(getInitialMode());
       setIsAuthReady(true);
     }
 
@@ -82,11 +86,13 @@ export default function App() {
     setCurrentUser(normalizedUserName);
     setStats(savedStats);
     setExcludedSolvedIds(savedStats.solvedIds);
+    setMode(getInitialMode());
   }, []);
 
   const handleLogout = useCallback(() => {
     clearCurrentUser();
     setCurrentUser(null);
+    setMode("menu");
     setStats(EMPTY_STATS);
     setExcludedSolvedIds([]);
   }, []);
@@ -105,6 +111,14 @@ export default function App() {
 
   const openFilters = useCallback(() => setIsFilterOpen(true), []);
   const closeFilters = useCallback(() => setIsFilterOpen(false), []);
+  const openModeMenu = useCallback(() => {
+    setMode("menu");
+    updateModeUrl("menu");
+  }, []);
+  const selectMode = useCallback((nextMode: Exclude<AppMode, "menu">) => {
+    setMode(nextMode);
+    updateModeUrl(nextMode);
+  }, []);
 
   if (!isAuthReady) {
     return (
@@ -121,6 +135,20 @@ export default function App() {
     return <LoginPanel onLogin={handleLogin} />;
   }
 
+  if (mode === "menu") {
+    return (
+      <ModeSelect
+        userName={currentUser}
+        onSelectMode={selectMode}
+        onLogout={handleLogout}
+      />
+    );
+  }
+
+  if (mode === "game") {
+    return <GameMode userName={currentUser} onBack={openModeMenu} />;
+  }
+
   return (
     <main className="app-shell">
       <PuzzleStats
@@ -129,6 +157,7 @@ export default function App() {
         totalPuzzles={puzzles.length}
         visiblePuzzles={visiblePuzzles.length}
         onLogout={handleLogout}
+        onOpenModes={openModeMenu}
       />
 
       <PuzzleFeed
@@ -149,4 +178,44 @@ export default function App() {
       />
     </main>
   );
+}
+
+function updateModeUrl(mode: AppMode) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  url.hash = "";
+
+  if (mode === "menu") {
+    url.searchParams.delete("mode");
+    url.searchParams.delete("game");
+  } else {
+    url.searchParams.set("mode", mode);
+    if (mode !== "game") {
+      url.searchParams.delete("game");
+    }
+  }
+
+  window.history.replaceState(null, "", url.toString());
+}
+
+function getInitialMode(): AppMode {
+  if (typeof window === "undefined") {
+    return "menu";
+  }
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const requestedMode = searchParams.get("mode");
+
+  if (requestedMode === "game" || window.location.hash.startsWith("#game=")) {
+    return "game";
+  }
+
+  if (requestedMode === "puzzle") {
+    return "puzzle";
+  }
+
+  return "menu";
 }
